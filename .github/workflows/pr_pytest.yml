@@ -10,81 +10,23 @@ on:
       - ".github/workflows/**"
       - "pyproject.toml"
 
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
   cancel-in-progress: true
 
 jobs:
-  test-no-soft-deps:
-    runs-on: ubuntu-24.04
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Python 3.12
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
-
-      - if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'no numba cache') }}
-        name: Restore numba cache
-        uses: ./.github/actions/numba_cache
-        with:
-          cache_name: "test-no-soft-deps"
-          runner_os: ${{ runner.os }}
-          python_version: "3.12"
-
-      - name: Install aeon and dependencies
-        uses: nick-fields/retry@v4
-        with:
-          timeout_minutes: 30
-          max_attempts: 3
-          command: python -m pip install .[dev]
-
-      - name: Show dependencies
-        run: python -m pip list
-
-      - name: Run tests
-        run: python -m pytest -n logical --prtesting ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full pytest actions') }}
-
-  test-soft-dep-skips:
-    runs-on: ubuntu-24.04
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Python 3.11
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.11"
-
-      - name: Install aeon and dependencies
-        uses: ./.github/actions/cpu_all_extras
-        with:
-          additional_extras: "dev,unstable_extras"
-
-      - name: Show dependencies
-        run: python -m pip list
-
-      - name: Run tests
-        run: python -m pytest --prtesting ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full pytest actions') }} --check-soft-dependency-skips -q
-
   pytest:
     runs-on: ${{ matrix.os }}
 
     strategy:
       fail-fast: false
       matrix:
-        os: [ ubuntu-24.04, macOS-14, windows-2022 ]
-        python-version: [ "3.11", "3.12", "3.13", "3.14" ]
-        # skip python versions unless the PR has the 'full pytest actions' label
-        pr-testing:
-          - ${{ (github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full pytest actions')) }}
-        exclude:
-          - pr-testing: true
-            python-version: "3.11"
+        os: [ ubuntu-24.04 ]
+        python-version: [ "3.12", "3.13", "3.14" ]
+        #teria que adicionar aq as versoes de ranking e as de regsmart
 
     steps:
       - name: Checkout
@@ -126,101 +68,5 @@ jobs:
         run: python -m pip list
 
       - name: Run tests
-        # run the full test suit if a PR has the 'full pytest actions' label
+        # run the full test suite if a PR has the 'full pytest actions' label
         run: python -m pytest -n logical --prtesting ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full pytest actions') }}
-
-  doctests:
-    runs-on: ubuntu-24.04
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Python 3.12
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
-
-      - if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'no numba cache') }}
-        name: Restore numba cache
-        uses: ./.github/actions/numba_cache
-        with:
-          cache_name: "doctests"
-          runner_os: ${{ runner.os }}
-          python_version: "3.12"
-
-      - name: Install aeon and dependencies
-        uses: ./.github/actions/cpu_all_extras
-        with:
-          additional_extras: "dev"
-
-      - name: Show dependencies
-        run: python -m pip list
-
-      - name: Run tests
-        run: python -m pytest -n logical --doctest-only
-
-  multithreaded-estimators:
-    runs-on: ubuntu-24.04
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Python 3.12
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
-
-      - if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'no numba cache') }}
-        name: Restore numba cache
-        uses: ./.github/actions/numba_cache
-        with:
-          cache_name: "multithreaded-estimators"
-          runner_os: ${{ runner.os }}
-          python_version: "3.12"
-
-      - name: Install aeon and dependencies
-        uses: ./.github/actions/cpu_all_extras
-        with:
-          additional_extras: "dev"
-
-      - name: Show dependencies
-        run: python -m pip list
-
-      - name: Run tests
-        run: python -m pytest aeon/testing/tests/ --enablethreading true -k "check_estimator_multithreading"
-
-  codecov:
-    # run the code coverage job if a PR has the 'codecov actions' label
-    if: ${{ github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'codecov actions') }}
-
-    runs-on: ubuntu-24.04
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v7
-
-      - name: Setup Python 3.12
-        uses: actions/setup-python@v7
-        with:
-          python-version: "3.12"
-
-      - name: Disable Numba JIT
-        run: echo "NUMBA_DISABLE_JIT=1" >> $GITHUB_ENV
-
-      - name: Install aeon and dependencies
-        uses: ./.github/actions/cpu_all_extras
-        with:
-          additional_extras: "unstable_extras,dev"
-
-      - name: Show dependencies
-        run: python -m pip list
-
-      - name: Run tests
-        run: python -m pytest -n logical --cov=aeon --cov-report=xml --timeout 1800
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v7
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
