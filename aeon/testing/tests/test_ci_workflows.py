@@ -15,6 +15,11 @@ def test_pr_subsample_covers_pr_pytest_matrix():
 
     Reads the pytest job matrix from the PR workflow, so this fails if the workflow
     OS or Python versions change without updating _get_pr_subsample_index.
+
+    A matrix spanning several operating systems must cover all three subsamples on
+    every OS and on every Python version. A single-OS matrix can only map one
+    subsample per Python version, so for those the matrix as a whole must cover all
+    three subsamples.
     """
     # workflow files are not shipped with the package, only test a repository checkout
     if not (REPO_ROOT / ".github").exists():
@@ -58,9 +63,19 @@ def test_pr_subsample_covers_pr_pytest_matrix():
             os_indices.setdefault(runner, set()).add(i)
             version_indices.setdefault(version, set()).add(i)
 
-    for name, indices in list(os_indices.items()) + list(version_indices.items()):
+    # subsample indices of the combinations which actually run with PR testing
+    all_indices = set().union(*os_indices.values())
+
+    scopes = [(f"OS {name}", indices) for name, indices in os_indices.items()]
+    scopes += [(f"Python {name}", indices) for name, indices in version_indices.items()]
+    if len(os_indices) == 1:
+        # a single OS maps one subsample per Python version, so requiring all three
+        # subsamples per version would need one job per version per OS
+        scopes = [("the matrix in total", all_indices)]
+
+    for scope, indices in scopes:
         assert indices == {0, 1, 2}, (
-            f"PR runs for {name} in {workflow.name} only test estimator subsamples "
-            f"{sorted(indices)}, update _get_pr_subsample_index so that every "
-            f"subsample is tested on each OS and Python version."
+            f"PR runs for {scope} in {workflow.name} only test estimator subsamples "
+            f"{sorted(indices)}, update _get_pr_subsample_index or the workflow "
+            f"matrix so that every subsample is tested on each OS and Python version."
         )
