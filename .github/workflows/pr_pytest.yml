@@ -9,6 +9,7 @@ on:
       - "aeon/**"
       - ".github/workflows/**"
       - "pyproject.toml"
+  workflow-dispatch:
 
 permissions:
   contents: read
