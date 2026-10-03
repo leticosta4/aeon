@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-<strong>Time series machine learning, built by the researchers behind the algorithms.
+<strong>Time series machine learning, built by the researchers behind the algorithms..
 </strong>
 </p>
 
