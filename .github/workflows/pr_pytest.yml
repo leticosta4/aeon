@@ -26,7 +26,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ ubuntu-24.04 ]
-        python-version: [ "3.13" ]
+        python-version: [ "3.12", "3.13", "3.14" ]
         #teria que adicionar aq as versoes de ranking e as de regsmart
 
     steps:
