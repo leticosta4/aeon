@@ -1,0 +1,105 @@
+name: PR ranking
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    paths:
+      - "aeon/**"
+      - ".github/workflows/**"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+env:
+  RANKING_PACKAGE: "pytest-ranking"
+
+jobs:
+  pytest-ranking:
+    name: rkng (${{ matrix.mode }})
+    runs-on: ubuntu-24.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.12", "3.13", "3.14"]
+        mode: [rkn_qtf, rkn_recentfail, rkn_simchgpath, rkn_hybrid]
+        include:
+          - mode: rkn_qtf
+            weight: "1-0-0"
+          - mode: rkn_recentfail
+            weight: "0-1-0"
+          - mode: rkn_simchgpath
+            weight: "0-0-1"
+          - mode: rkn_hybrid
+            weight: "1-1-1"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Clear disk space
+        uses: jlumbroso/free-disk-space@v2.0.0
+        with:
+          dotnet: false
+          large-packages: false
+          swap-storage: false
+
+      - name: Set swap space
+        if: runner.os == 'Linux'
+        uses: pierotofy/set-swap-space@v1.0
+        with:
+          swap-size-gb: 12
+
+      - if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, 'no numba cache') }}
+        name: Restore numba cache
+        uses: ./.github/actions/numba_cache
+        with:
+          cache_name: "pytest"
+          runner_os: ${{ runner.os }}
+          python_version: ${{ matrix.python-version }}
+
+      - name: Install aeon and dependencies
+        uses: ./.github/actions/cpu_all_extras
+        with:
+          python_version: ${{ matrix.python-version }}
+          additional_extras: "dev"
+      
+      - name: Install pytest-ranking
+        run: |
+          python -m pip install "$RANKING_PACKAGE"
+          python -m pip freeze
+
+      - name: Show dependencies
+        run: python -m pip list
+
+      - name: Restore pytest-ranking cache
+        id: restore-pytest-ranking-cache
+        if: always()
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranking_data
+          key: pytest-ranking-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.mode }}
+
+      - name: Run tests w/ pytest-ranking
+        run: python -m pytest --rank --rank-weight=${{ matrix.weight }} -n logical --prtesting ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full pytest actions') }}
+
+      - name: Save pytest-ranking cache
+        id: save-pytest-ranking-cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/.pytest_cache/v/pytest_ranking_data
+          key: pytest-ranking-cache-${{ github.workflow }}-${{ runner.os }}-${{ matrix.mode }}-${{ github.run_id }}
