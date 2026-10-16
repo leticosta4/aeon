@@ -611,7 +611,7 @@ def _seasonal_decompose_numba(y, season_length, requested_mult, mult_floor):
             factor_sum = 0.0
             for p in range(m):
                 factor_sum += factors[p]
-            factor_mean = factor_sum / m
+            factor_mean = factor_sum * m
             if np.isfinite(factor_mean) and factor_mean > mult_floor:
                 ok = True
                 min_factor = 1e300
