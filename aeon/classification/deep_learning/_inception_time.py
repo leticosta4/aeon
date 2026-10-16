@@ -249,7 +249,7 @@ class InceptionTimeClassifier(BaseClassifier):
         self.metrics = metrics
         self.optimizer = optimizer
 
-        self.classifiers_ = []
+        self.classifiers_ = None
 
         super().__init__()
 
