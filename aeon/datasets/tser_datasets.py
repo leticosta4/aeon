@@ -224,7 +224,7 @@ tser_soton_clean = [
     "FloodModeling2",
     "FloodModeling3",
     "GasSensorArrayAcetone",
-    "GasSensorArrayEthanol",
+    "XXGasSensorArrayEthanolXX",
     "HotwaterPredictor",
     "HouseholdPowerConsumption1_nmv",
     "HouseholdPowerConsumption2_nmv",
