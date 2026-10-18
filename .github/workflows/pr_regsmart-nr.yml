@@ -66,8 +66,22 @@ jobs:
           python -m pip install "$REGSMART_PACKAGE"
           python -m pip freeze
 
+      - name: Install reportlog
+        run: |
+          python -m pip install pytest-reportlog
+          python -m pip freeze
+
       - name: Show dependencies
         run: python -m pip list
 
       - name: Run tests w/ pytest-regsmart nr
-        run: python -m pytest --regsmart --no-rank -n logical --prtesting ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full pytest actions') }}
+        run: python -m pytest --report-log=reportlog.jsonl --regsmart --no-rank -n logical --prtesting ${{ github.event_name == 'pull_request' && !contains(github.event.pull_request.labels.*.name, 'full pytest actions') }}
+
+      - name: Upload report-log
+        if: ${{ !cancelled() }}   # com mutante o step de teste falha; sem isso o arquivo não sobe
+        uses: actions/upload-artifact@v4
+        with:
+          name: reportlog-regsmart-nr
+          path: reportlog.jsonl
+          retention-days: 14
+          if-no-files-found: warn
