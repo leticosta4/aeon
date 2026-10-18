@@ -311,7 +311,7 @@ class DisjointCNNClassifier(BaseDeepClassifier):
 
         y_onehot = self.convert_y_to_keras(y)
         # Transpose to conform to Keras input style.
-        X = X.transpose(0, 3, 1)
+        X = X.transpose(0, 2, 1)
 
         self.input_shape = X.shape[1:]
         self.training_model_ = self.build_model(self.input_shape, self.n_classes_)
