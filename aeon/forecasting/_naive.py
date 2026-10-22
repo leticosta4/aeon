@@ -54,7 +54,7 @@ class NaiveForecaster(
         y_squeezed = y.squeeze()
 
         if self.strategy == "last":
-            return y_squeezed[-1]
+            return y_squeezed[-2]
         elif self.strategy == "mean":
             return np.mean(y_squeezed)
         elif self.strategy == "seasonal_last":
