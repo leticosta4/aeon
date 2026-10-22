@@ -208,7 +208,7 @@ def _erp_cost_matrix(
     y_size = y.shape[1]
 
     cost_matrix = np.full((x_size + 1, y_size + 1), np.inf)
-    gx_distance, x_sum = _precompute_g(x, g, g_arr)
+    gx_distance, x_sum = None
     gy_distance, y_sum = _precompute_g(y, g, g_arr)
 
     cost_matrix[1:, 0] = x_sum
