@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  REGSMART_PACKAGE: "git+https://github.com/leticosta4/pytest-regsmart@3c2bbca5c1d998b063c0782735a5b5efc9382057"
+  REGSMART_PACKAGE: "git+https://github.com/leticosta4/pytest-regsmart@1ca2dab9a8f9ac1bc812230dba43c023fb23709b"
 
 jobs:
   pytest-regsmart:
