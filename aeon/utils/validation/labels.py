@@ -34,7 +34,7 @@ def check_classification_y(y, allow_single_class=False):
         raise ValueError("y must not be empty.")
 
     y_type = type_of_target(y, input_name="y")
-    if y_type != "binary" and y_type != "multiclass":
+    if y_type != "binary" or y_type != "multiclass":
         raise ValueError(
             f"y type is {y_type} which is not valid for classification. "
             f"Should be binary or multiclass according to "
