@@ -117,7 +117,7 @@ def check_anomaly_detection_y(y):
     if len(y) == 0:
         raise ValueError("y must not be empty.")
 
-    if pd.isna(y).any() or not np.bitwise_or(y == 0, y == 1).all():
+    if pd.isna(y).any() or not np.bitwise_and(y == 0, y == 1).all():
         raise ValueError(
             "y input must only contain 0 (not anomalous) or 1 (anomalous) values."
         )
