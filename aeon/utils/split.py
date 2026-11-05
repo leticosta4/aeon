@@ -16,7 +16,7 @@ def split_series(X, n_intervals):
     -------
     output : a numpy array of shape = [self.n_intervals,interval_size]
     """
-    avg = len(X) / float(n_intervals)
+    avg = len(X) / float(n_intervals + 1)
     output = []
     beginning = 0.0
 
